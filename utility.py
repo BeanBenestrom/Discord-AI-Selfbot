@@ -1,12 +1,28 @@
-from settings import BOT_ID, ADMIN_ID, COMMAND_PREFIX, CONTAINER_CHAR
+import datetime
+import debug
+from settings import BOT_ID, ADMINS_ID, COMMAND_PREFIX, CONTAINER_CHAR
+
+w  = debug.Fore.WHITE
+lb = debug.Fore.LIGHTBLACK_EX
+lg = debug.Fore.LIGHTGREEN_EX
+ly = debug.Fore.LIGHTYELLOW_EX
+lr = debug.Fore.LIGHTRED_EX
 
 
-def is_owner(ctx):
+def is_owner(id):
+    '''
+    check if message sender is the owner.
+    '''
+    # return ctx.message.author.id == ADMIN_ID
+
+
+def is_admin(id):
     '''
     check if message sender is the admin.
     '''
-
-    return ctx.message.author.id == ADMIN_ID
+    for admin in ADMINS_ID:
+        if id == admin: return True
+    return False
 
 
 
@@ -14,32 +30,32 @@ def print_message_info(messageClass):
     '''
     Print message information into the terminal.
     '''
-    print(CONTAINER_CHAR * 30)
-    try:    print(f"ACTIVITY: {messageClass.activity}")
-    except: print(f"ACTIVITY: FAILED")                 
-    try:    print(f"AUTHOR  : {messageClass.author.name}")
-    except: print(f"AUTHOR  : FAILED")
-    try:    print(f"GUILD   :   origin: {messageClass.guild}")
-    except: print(f"GUILD   :   origin: FAILED")
-    try:    print(f"              name: {messageClass.guild.name}")
-    except: print(f"              name: FAILED")
-    try:    print(f"CHANNEL :   origin: {messageClass.channel}")
-    except: print(f"CHANNEL :   origin: FAILED")
-    try:    print(f"CHANNEL :       id: {messageClass.channel.id}")
-    except: print(f"CHANNEL :       id: FAILED")
-    try:    print(f"              type: {messageClass.channel.type}")
-    except: print(f"              type: FAILED")
-    try:    print(f"             guild: {messageClass.channel.guild}")
-    except: print(f"             guild: FAILED")
-    try:    print(f"          category: {messageClass.channel.category}")
-    except: print(f"          category: FAILED")
-    try:    print(f"MESSAGE : {messageClass.content}")
-    except: print(f"MESSAGE : FAILED")
-    try:    print(f"MENTIONS:   normal: {messageClass.mentions}")
-    except: print(f"MENTIONS:   normal: FAILED")
-    try:    print(f"               raw: {messageClass.raw_mentions}")
-    except: print(f"               raw: FAILED")
-    print(CONTAINER_CHAR * 30)
+    debug.log(lb, CONTAINER_CHAR * 30)
+    try:    debug.log(w, f"ACTIVITY: {messageClass.activity}")
+    except: debug.log(w, f"ACTIVITY: FAILED")                 
+    try:    debug.log(w, f"AUTHOR  : {messageClass.author.name}")
+    except: debug.log(w, f"AUTHOR  : FAILED")
+    try:    debug.log(w, f"GUILD   :   origin: {messageClass.guild}")
+    except: debug.log(w, f"GUILD   :   origin: FAILED")
+    try:    debug.log(w, f"              name: {messageClass.guild.name}")
+    except: debug.log(w, f"              name: FAILED")
+    try:    debug.log(w, f"CHANNEL :   origin: {messageClass.channel}")
+    except: debug.log(w, f"CHANNEL :   origin: FAILED")
+    try:    debug.log(w, f"CHANNEL :       id: {messageClass.channel.id}")
+    except: debug.log(w, f"CHANNEL :       id: FAILED")
+    try:    debug.log(w, f"              type: {messageClass.channel.type}")
+    except: debug.log(w, f"              type: FAILED")
+    try:    debug.log(w, f"             guild: {messageClass.channel.guild}")
+    except: debug.log(w, f"             guild: FAILED")
+    try:    debug.log(w, f"          category: {messageClass.channel.category}")
+    except: debug.log(w, f"          category: FAILED")
+    try:    debug.log(w, f"MESSAGE : {messageClass.content}")
+    except: debug.log(w, f"MESSAGE : FAILED")
+    try:    debug.log(w, f"MENTIONS:   normal: {messageClass.mentions}")
+    except: debug.log(w, f"MENTIONS:   normal: FAILED")
+    try:    debug.log(w, f"               raw: {messageClass.raw_mentions}")
+    except: debug.log(w, f"               raw: FAILED")
+    debug.log(lb, CONTAINER_CHAR * 30)
 
 
 def print_command_info(messageClass, command:str, args:list=[]):
@@ -61,18 +77,32 @@ def print_command_info(messageClass, command:str, args:list=[]):
     string_args = ""
     for arg in args: string_args += f"{arg} "
 
-    print(CONTAINER_CHAR * 30)
-    print(f"COMMAND: {command}")
-    print(f"ARGS   : {string_args}")
-    print(f"SENDER : {messageClass.author.name} - {messageClass.author.id}")
-    print(CONTAINER_CHAR * 30)
+    debug.log(lb, CONTAINER_CHAR * 30)
+    debug.log(w, f"COMMAND: {command}")
+    debug.log(w, f"ARGS   : {string_args}")
+    debug.log(w, f"SENDER : {messageClass.author.name} - {messageClass.author.id}")
+    debug.log(lb, CONTAINER_CHAR * 30)
 
 
-def print_message_info_inline(messageClass):
+def print_message_info_inline(messageClass, max_guild_length, max_channel_length, max_author_length, max_message_length):
     '''
     Print message information inline into the terminal.
     '''
-    print(f"{messageClass.author.name} - {messageClass.channel} - {messageClass.content}")
+
+    def padding(string, max):
+        length = len(string)
+        if length > max: length = max
+        return string + " " * ( max - length )
+
+    guildText = ""
+    if messageClass.guild: guildText = f"{padding(messageClass.guild.name, max_guild_length)} - "
+
+    channelText = padding(str(messageClass.channel), max_channel_length)
+    authorText  = padding( messageClass.author.name, max_author_length )
+
+    l  = messageClass.content.split('\n')
+    inline = f"{guildText}{channelText} - {authorText} - {l[0][:max_message_length] + ' ...' if len(l) != 1 else l[0][:max_message_length]}"
+    debug.log(lb, inline)
 
 
 
@@ -87,11 +117,15 @@ def get_command_info(messageClass):
 
         `[COMMAND_PREFIX][COMMAND] [ARGS]...`
 
-        example: `>add_numbers 24 15 9 10`
-
-    - COMMAND_PREFIX must be 1 charather
+        example: `@BOT> add_numbers 24 15 9 10`
     '''
     parts = messageClass.content.split(' ')
-    command = parts[0][1:]
-    args = parts[1:]
+    command = parts[1]
+    args = parts[2:]
     return (command, args)
+
+
+# def serialize_datetime(obj):
+#     if isinstance(obj, datetime.datetime):
+#         return obj.isoformat()
+#     raise TypeError("Type not serializable")
